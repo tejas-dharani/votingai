@@ -63,23 +63,7 @@
 pip install votingai
 ```
 
-For OpenAI support:
-
-```bash
-pip install "votingai[openai]"
-```
-
-For Anthropic (Claude) support:
-
-```bash
-pip install "votingai[anthropic]"
-```
-
-For both providers:
-
-```bash
-pip install "votingai[all-providers]"
-```
+Both OpenAI and Anthropic (Claude) are included out of the box.
 
 For development with additional tools:
 

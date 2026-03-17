@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "votingai"
-version = "1.0.2"
+version = "1.0.3"
 description = "VotingAI: Democratic Multi-Agent Systems"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,9 +31,10 @@ classifiers = [
 ]
 dependencies = [
     "aiofiles>=24.1.0",
+    "anthropic>=0.40.0",
     "autogen-agentchat>=0.4.0",
     "autogen-core>=0.4.0",
-    "autogen-ext[openai]>=0.4.0",
+    "autogen-ext[openai,anthropic]>=0.4.0",
     "crewai>=0.165.1",
     "langchain>=0.3.27",
     "langchain-openai>=0.3.30",
@@ -55,20 +56,6 @@ Issues = "https://github.com/tejas-dharani/votingai/issues"
 Changelog = "https://github.com/tejas-dharani/votingai/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-anthropic = [
-    "anthropic>=0.40.0",
-    "autogen-ext[anthropic]>=0.4.0",
-]
-openai = [
-    "autogen-ext[openai]>=0.4.0",
-    "openai>=1.0.0",
-]
-all-providers = [
-    "anthropic>=0.40.0",
-    "autogen-ext[anthropic]>=0.4.0",
-    "autogen-ext[openai]>=0.4.0",
-    "openai>=1.0.0",
-]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21.0", 

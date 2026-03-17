@@ -15,7 +15,7 @@ maintainers = [
     {name = "Tejas Dharani", email = "tejas.dharani10@gmail.com"}
 ]
 license = {text = "MIT"}
-keywords = ["votingai", "voting", "multi-agent", "consensus", "ai", "agents", "democracy", "autogen"]
+keywords = ["votingai", "voting", "multi-agent", "consensus", "ai", "agents", "democracy", "autogen", "openai", "anthropic", "claude"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -55,6 +55,20 @@ Issues = "https://github.com/tejas-dharani/votingai/issues"
 Changelog = "https://github.com/tejas-dharani/votingai/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
+anthropic = [
+    "anthropic>=0.40.0",
+    "autogen-ext[anthropic]>=0.4.0",
+]
+openai = [
+    "autogen-ext[openai]>=0.4.0",
+    "openai>=1.0.0",
+]
+all-providers = [
+    "anthropic>=0.40.0",
+    "autogen-ext[anthropic]>=0.4.0",
+    "autogen-ext[openai]>=0.4.0",
+    "openai>=1.0.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21.0", 

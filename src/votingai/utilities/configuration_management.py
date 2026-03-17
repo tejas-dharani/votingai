@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, Optional
 
+from .model_providers import DEFAULT_ANTHROPIC_MODEL, DEFAULT_OPENAI_MODEL, ModelProvider
+
 # Model constants
 DEFAULT_MODEL = "gpt-4o-mini"
 
@@ -28,7 +30,8 @@ class LogLevel(str, Enum):
 class ModelConfiguration:
     """Configuration for AI model settings."""
 
-    default_model: str = "gpt-4o-mini"
+    provider: ModelProvider = ModelProvider.OPENAI
+    default_model: str = DEFAULT_OPENAI_MODEL
     fallback_model: str = "gpt-3.5-turbo"
     max_tokens: int = 4096
     temperature: float = 0.7
@@ -36,11 +39,34 @@ class ModelConfiguration:
     retry_attempts: int = 3
 
     @classmethod
+    def for_openai(cls, model: str = DEFAULT_OPENAI_MODEL) -> "ModelConfiguration":
+        """Create an OpenAI-backed configuration."""
+        return cls(provider=ModelProvider.OPENAI, default_model=model, fallback_model="gpt-3.5-turbo")
+
+    @classmethod
+    def for_anthropic(cls, model: str = DEFAULT_ANTHROPIC_MODEL) -> "ModelConfiguration":
+        """Create an Anthropic (Claude) backed configuration."""
+        return cls(provider=ModelProvider.ANTHROPIC, default_model=model, fallback_model="claude-haiku-4-5-20251001")
+
+    @classmethod
     def from_environment(cls) -> "ModelConfiguration":
-        """Create configuration from environment variables."""
+        """Create configuration from environment variables.
+
+        Set VOTINGAI_PROVIDER=anthropic to use Claude, or omit for OpenAI (default).
+        """
+        provider_str = os.getenv("VOTINGAI_PROVIDER", ModelProvider.OPENAI.value).lower()
+        try:
+            provider = ModelProvider(provider_str)
+        except ValueError:
+            provider = ModelProvider.OPENAI
+
+        default_model_fallback = DEFAULT_ANTHROPIC_MODEL if provider == ModelProvider.ANTHROPIC else DEFAULT_OPENAI_MODEL
+        fallback_model_default = "claude-haiku-4-5-20251001" if provider == ModelProvider.ANTHROPIC else "gpt-3.5-turbo"
+
         return cls(
-            default_model=os.getenv("VOTINGAI_DEFAULT_MODEL", cls.default_model),
-            fallback_model=os.getenv("VOTINGAI_FALLBACK_MODEL", cls.fallback_model),
+            provider=provider,
+            default_model=os.getenv("VOTINGAI_DEFAULT_MODEL", default_model_fallback),
+            fallback_model=os.getenv("VOTINGAI_FALLBACK_MODEL", fallback_model_default),
             max_tokens=int(os.getenv("VOTINGAI_MAX_TOKENS", cls.max_tokens)),
             temperature=float(os.getenv("VOTINGAI_TEMPERATURE", cls.temperature)),
             timeout_seconds=int(os.getenv("VOTINGAI_TIMEOUT", cls.timeout_seconds)),

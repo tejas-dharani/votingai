@@ -19,13 +19,13 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from votingai import VotingMethod
 from votingai.research import (
     BenchmarkRunner,
-    BenchmarkScenario, 
+    BenchmarkScenario,
     BenchmarkConfiguration,
     ScenarioType,
     ComparisonResults,
-    ResultsAnalyzer
+    ResultsAnalyzer,
 )
-from votingai.utilities import DEFAULT_MODEL
+from votingai.utilities import DEFAULT_ANTHROPIC_MODEL, DEFAULT_OPENAI_MODEL, ModelProvider
 
 
 def create_validation_scenarios() -> List[BenchmarkScenario]:
@@ -202,19 +202,23 @@ def create_comprehensive_scenarios() -> List[BenchmarkScenario]:
     return scenarios
 
 
-async def run_validation_test() -> bool:
+async def run_validation_test(provider: ModelProvider = ModelProvider.OPENAI) -> bool:
     """Run quick validation tests for all scenario types."""
     print("=== System Validation Test ===")
     print("Testing core functionality with simple scenarios...")
-    
-    if not os.getenv("OPENAI_API_KEY"):
-        print("❌ OPENAI_API_KEY not set. Please set it to run benchmarks.")
+
+    env_key = "ANTHROPIC_API_KEY" if provider == ModelProvider.ANTHROPIC else "OPENAI_API_KEY"
+    if not os.getenv(env_key):
+        print(f"❌ {env_key} not set. Please set it to run benchmarks.")
         return False
-    
+
+    default_model = DEFAULT_ANTHROPIC_MODEL if provider == ModelProvider.ANTHROPIC else DEFAULT_OPENAI_MODEL
+
     try:
         # Create configuration for fast validation
         config = BenchmarkConfiguration(
-            model_name=DEFAULT_MODEL,
+            provider=provider,
+            model_name=default_model,
             max_messages=10,
             timeout_seconds=120,
             rate_limit_delay=0.5,
@@ -266,18 +270,22 @@ async def run_validation_test() -> bool:
         return False
 
 
-async def run_quick_test() -> bool:
+async def run_quick_test(provider: ModelProvider = ModelProvider.OPENAI) -> bool:
     """Run a single quick test to verify everything works."""
     print("=== Quick Benchmark Test ===")
-    
-    if not os.getenv("OPENAI_API_KEY"):
-        print("❌ OPENAI_API_KEY not set. Please set it to run benchmarks.")
-        print("   export OPENAI_API_KEY='your-api-key'")
+
+    env_key = "ANTHROPIC_API_KEY" if provider == ModelProvider.ANTHROPIC else "OPENAI_API_KEY"
+    if not os.getenv(env_key):
+        print(f"❌ {env_key} not set. Please set it to run benchmarks.")
+        print(f"   export {env_key}='your-api-key'")
         return False
-    
+
+    default_model = DEFAULT_ANTHROPIC_MODEL if provider == ModelProvider.ANTHROPIC else DEFAULT_OPENAI_MODEL
+
     try:
         config = BenchmarkConfiguration(
-            model_name=DEFAULT_MODEL,
+            provider=provider,
+            model_name=default_model,
             rate_limit_delay=1.0,
             max_retries=3,
             save_detailed_logs=True
@@ -317,21 +325,26 @@ async def run_quick_test() -> bool:
 
 async def run_full_benchmarks(
     scenario_types: Optional[List[ScenarioType]] = None,
-    voting_methods: Optional[List[VotingMethod]] = None
+    voting_methods: Optional[List[VotingMethod]] = None,
+    provider: ModelProvider = ModelProvider.OPENAI,
 ) -> List[ComparisonResults]:
     """Run comprehensive benchmark suite."""
     print("=== Full Benchmark Suite ===")
-    
-    if not os.getenv("OPENAI_API_KEY"):
-        print("❌ OPENAI_API_KEY not set. Please set it to run benchmarks.")
+
+    env_key = "ANTHROPIC_API_KEY" if provider == ModelProvider.ANTHROPIC else "OPENAI_API_KEY"
+    if not os.getenv(env_key):
+        print(f"❌ {env_key} not set. Please set it to run benchmarks.")
         return []
-    
+
     # Setup configuration
     if voting_methods is None:
         voting_methods = [VotingMethod.MAJORITY, VotingMethod.QUALIFIED_MAJORITY, VotingMethod.UNANIMOUS]
-    
+
+    default_model = DEFAULT_ANTHROPIC_MODEL if provider == ModelProvider.ANTHROPIC else DEFAULT_OPENAI_MODEL
+
     config = BenchmarkConfiguration(
-        model_name=DEFAULT_MODEL,
+        provider=provider,
+        model_name=default_model,
         rate_limit_delay=2.0,
         max_retries=3,
         save_detailed_logs=True,
@@ -365,13 +378,13 @@ async def run_full_benchmarks(
     return results
 
 
-async def run_scalability_test() -> None:
+async def run_scalability_test(provider: ModelProvider = ModelProvider.OPENAI) -> None:
     """Run scalability analysis with different agent configurations."""
     print("=== Scalability Test ===")
-    
+
     # This would be expanded for comprehensive scalability testing
     print("Running basic scalability test...")
-    
+
     base_scenario = BenchmarkScenario(
         name="scalability_test",
         scenario_type=ScenarioType.TECHNICAL_EVALUATION,
@@ -381,12 +394,14 @@ async def run_scalability_test() -> None:
             {"name": f"Agent_{i}", "role": f"Evaluator {i}", "description": f"Technical evaluator {i}"}
             for i in range(1, 6)  # 5 agents
         ],
-        complexity_level="moderate"
+        complexity_level="moderate",
     )
-    
+
+    default_model = DEFAULT_ANTHROPIC_MODEL if provider == ModelProvider.ANTHROPIC else DEFAULT_OPENAI_MODEL
     config = BenchmarkConfiguration(
-        model_name=DEFAULT_MODEL,
-        save_detailed_logs=True
+        provider=provider,
+        model_name=default_model,
+        save_detailed_logs=True,
     )
     
     runner = BenchmarkRunner(config)
@@ -427,6 +442,14 @@ Examples:
         """,
     )
 
+    # Provider selection
+    parser.add_argument(
+        "--provider",
+        choices=["openai", "anthropic"],
+        default="openai",
+        help="AI provider to use: openai (default) or anthropic (Claude)",
+    )
+
     # Test modes
     parser.add_argument("--quick", action="store_true", help="Run quick functionality test")
     parser.add_argument("--validate", action="store_true", help="Validate all scenario types")
@@ -450,6 +473,9 @@ Examples:
     if not any(vars(args).values()):
         parser.print_help()
         return
+
+    # Resolve provider
+    provider = ModelProvider.ANTHROPIC if args.provider == "anthropic" else ModelProvider.OPENAI
 
     # Determine scenario types
     scenario_types = []
@@ -478,23 +504,26 @@ Examples:
     # Run requested benchmarks
     try:
         if args.quick:
-            success = asyncio.run(run_quick_test())
+            success = asyncio.run(run_quick_test(provider=provider))
             if not success:
                 sys.exit(1)
 
         if args.validate:
-            success = asyncio.run(run_validation_test())
+            success = asyncio.run(run_validation_test(provider=provider))
             if not success:
                 sys.exit(1)
 
         if args.full or scenario_types:
-            asyncio.run(run_full_benchmarks(
-                scenario_types=scenario_types if scenario_types else None,
-                voting_methods=voting_methods
-            ))
+            asyncio.run(
+                run_full_benchmarks(
+                    scenario_types=scenario_types if scenario_types else None,
+                    voting_methods=voting_methods,
+                    provider=provider,
+                )
+            )
 
         if args.scalability:
-            asyncio.run(run_scalability_test())
+            asyncio.run(run_scalability_test(provider=provider))
 
     except KeyboardInterrupt:
         print("\n⚠️  Benchmark interrupted by user")

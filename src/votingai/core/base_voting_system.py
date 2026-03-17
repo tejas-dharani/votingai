@@ -101,18 +101,21 @@ class BaseVotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfiguration]
     in the system module.
 
     Examples:
-        Basic voting for simple decisions:
+        Basic voting with OpenAI:
 
         ```python
         import asyncio
-        from autogen_ext.models.openai import OpenAIChatCompletionClient
         from autogen_agentchat.agents import AssistantAgent
-        from votingai.core import BaseVotingGroupChat, VotingMethod
+        from votingai import BaseVotingGroupChat, VotingMethod, ModelProvider, create_model_client
         from autogen_agentchat.conditions import MaxMessageTermination
 
 
         async def main():
-            model_client = OpenAIChatCompletionClient(model="gpt-4o")
+            # OpenAI
+            model_client = create_model_client(ModelProvider.OPENAI, model="gpt-4o")
+
+            # Or Claude (Anthropic) — drop-in swap:
+            # model_client = create_model_client(ModelProvider.ANTHROPIC, model="claude-opus-4-6")
 
             # Create participants
             reviewer1 = AssistantAgent("Reviewer1", model_client)

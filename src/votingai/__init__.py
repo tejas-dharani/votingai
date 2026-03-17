@@ -90,17 +90,23 @@ from .security import (
 
 # Configuration and utilities
 from .utilities import (
+    DEFAULT_ANTHROPIC_MODEL,
     DEFAULT_MODEL,
+    DEFAULT_OPENAI_MODEL,
     ConfigurationError,
     ErrorCodes,
     LoggingConfiguration,
     ModelConfiguration,
+    # Model providers
+    ModelProvider,
     ProcessingError,
     SecurityError,
     # Configuration management
     VotingSystemConfig,
     # Common types and errors
     VotingSystemError,
+    create_model_client,
+    get_default_model,
 )
 
 # Core functionality exports
@@ -181,7 +187,13 @@ __all__ = [
     "SecurityError",
     "ProcessingError",
     "ErrorCodes",
-    # === END OF EXPORTS ==="
+    # === MODEL PROVIDERS ===
+    "ModelProvider",
+    "create_model_client",
+    "get_default_model",
+    "DEFAULT_OPENAI_MODEL",
+    "DEFAULT_ANTHROPIC_MODEL",
+    # === END OF EXPORTS ===
 ]
 
 

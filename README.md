@@ -63,10 +63,28 @@
 pip install votingai
 ```
 
+For OpenAI support:
+
+```bash
+pip install "votingai[openai]"
+```
+
+For Anthropic (Claude) support:
+
+```bash
+pip install "votingai[anthropic]"
+```
+
+For both providers:
+
+```bash
+pip install "votingai[all-providers]"
+```
+
 For development with additional tools:
 
 ```bash
-pip install votingai[dev]
+pip install "votingai[dev]"
 ```
 
 For development from source:
@@ -90,16 +108,21 @@ VotingAI is built with a modular architecture for enterprise-grade voting system
 
 ## 🎯 Quick Start
 
+VotingAI supports both **OpenAI** and **Anthropic (Claude)** — swap providers with one line.
+
 ```python
 import asyncio
-from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import MaxMessageTermination
 
-from votingai import BaseVotingGroupChat, VotingMethod
+from votingai import BaseVotingGroupChat, VotingMethod, ModelProvider, create_model_client
 
 async def main():
-    model_client = OpenAIChatCompletionClient(model="gpt-4o")
+    # OpenAI (uses OPENAI_API_KEY env var)
+    model_client = create_model_client(ModelProvider.OPENAI, model="gpt-4o")
+
+    # Anthropic / Claude (uses ANTHROPIC_API_KEY env var) — drop-in swap:
+    # model_client = create_model_client(ModelProvider.ANTHROPIC, model="claude-opus-4-6")
     
     # Create voting agents
     agents = [
@@ -316,11 +339,15 @@ python examples/scalability_example.py --test basic
 The extension includes comprehensive benchmarking tools to compare voting-based vs. standard group chat approaches:
 
 ```bash
-# Run quick benchmark test
+# Run quick benchmark test (OpenAI, default)
 python run_benchmarks.py --quick
+
+# Run with Claude (Anthropic)
+python run_benchmarks.py --quick --provider anthropic
 
 # Run full benchmark suite
 python run_benchmarks.py --full
+python run_benchmarks.py --full --provider anthropic
 
 # Run specific scenario types
 python run_benchmarks.py --code-review

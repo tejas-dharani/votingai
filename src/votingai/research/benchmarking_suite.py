@@ -18,9 +18,9 @@ from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import MaxMessageTermination
 from autogen_agentchat.teams import RoundRobinGroupChat
-from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from ..core import BaseVotingGroupChat, VotingMethod
+from ..utilities.model_providers import DEFAULT_OPENAI_MODEL, ModelProvider, create_model_client
 from .evaluation_metrics import BenchmarkMetrics, ComparisonResults, MetricsCollector
 
 logger = logging.getLogger(__name__)
@@ -141,7 +141,8 @@ class BenchmarkConfiguration:
     """Configuration for benchmark execution."""
 
     # Model settings
-    model_name: str = "gpt-4o-mini"
+    provider: ModelProvider = ModelProvider.OPENAI
+    model_name: str = DEFAULT_OPENAI_MODEL
     model_temperature: float = 0.7
     max_tokens: int = 2000
 
@@ -181,13 +182,15 @@ class BenchmarkRunner:
         self.results_dir = Path(self.config.results_directory)
         self.results_dir.mkdir(exist_ok=True, parents=True)
 
-        # Setup model client - check for API key
-        api_key = os.getenv("OPENAI_API_KEY")
+        # Setup model client - check for API key based on provider
+        env_key = "ANTHROPIC_API_KEY" if self.config.provider == ModelProvider.ANTHROPIC else "OPENAI_API_KEY"
+        api_key = os.getenv(env_key)
         if not api_key:
-            logger.warning("OPENAI_API_KEY not found. Using mock client for testing.")
+            logger.warning("%s not found. Using mock client for testing.", env_key)
             self.model_client = None  # Will use mock agents
         else:
-            self.model_client = OpenAIChatCompletionClient(
+            self.model_client = create_model_client(
+                provider=self.config.provider,
                 model=self.config.model_name,
                 temperature=self.config.model_temperature,
                 max_tokens=self.config.max_tokens,
